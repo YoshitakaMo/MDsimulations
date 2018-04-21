@@ -1,0 +1,55 @@
+; e.g.: -DPOSRES -DFLEXIBLE (note these variable names are case sensitive)
+define       = -DPOSRES1000
+; RUN CONTROL PARAMETERS
+integrator   = md
+dt           = 0.002
+nsteps       = 50000
+cutoff-scheme = Verlet
+;
+nstxout      = 500
+nstlog       = 500
+nstenergy    = 500
+;
+nstlist      = 20
+ns_type      = grid
+pbc          = xyz
+rlist        = 0.8
+;
+coulombtype  = PME
+rcoulomb     = 0.8
+;
+vdwtype      = cut-off
+rvdw         = 0.8
+dispcorr     = enerpres
+;
+optimize_fft = yes
+;
+tcoupl       = v-rescale
+tc_grps      = nowation Water_and_ions
+tau_t        = 0.1 0.1
+ref_t        = 300.0 300.0
+;
+pcoupl       = berendsen
+pcoupltype   = isotropic
+tau_p        = 1.0
+compressibility = 4.5e-5
+ref_p        = 1.0
+refcoord_scaling = all
+;
+gen_vel      = no
+;
+continuation= yes; Restarting after previous RUN
+constraints  = hbonds
+constraint_algorithm = LINCS
+
+; NMR refinement stuff  = 
+; Distance restraints type: No, Simple or Ensemble = 
+disre                    = simple
+; Force weighting of pairs in one distance restraint: Equal or Conservative = 
+disre-weighting          = Equal
+; Use sqrt of the time averaged times the instantaneous violation = 
+disre-mixed              = no
+disre-fc                 = 1000
+disre-tau                = 0
+; Output frequency for pair distances to energy file = 
+nstdisreout              = 5000

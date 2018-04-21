@@ -1,0 +1,22 @@
+define       =
+;
+integrator   = steep
+nsteps       = 200
+;
+nstlog       = 1
+;
+nstlist      = 100
+ns_type      = grid
+pbc          = xyz
+rlist        = 1.0
+;
+coulombtype  = PME
+rcoulomb     = 1.0
+;
+vdwtype      = cut-off
+rvdw         = 1.0
+;
+optimize_fft = yes
+;
+constraints  = none
+

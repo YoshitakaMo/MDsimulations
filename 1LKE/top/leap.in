@@ -1,0 +1,33 @@
+#AMBER の力場パラメータff14SBを読み込む
+source leaprc.protein.ff14SB #for AmberTools16
+source leaprc.gaff #小分子向けの汎用力場「GAFF」を読み込む
+source leaprc.water.tip3p #for AmberTools16
+
+#追加のイオンの力場の導入
+loadAmberParams frcmod.ionsjc_tip3p
+
+#.mol2ファイルの読み込み
+DOG = loadMol2 dog.mol2
+
+#pdbを"mol"として読み込む
+mol = loadPDB ../PDB/1LKE_trun_hid_cyx.pdb
+
+#SS-bondを設定
+bond mol.8.SG mol.115.SG
+bond mol.42.SG mol.170.SG
+
+#イオンの追加。末尾の数だけ対応するイオンを配置する。0を指定すると系全体の電荷を0にするようにイオンを入れるという設定になる。
+addIons2 mol Na+ 20
+addIons2 mol Cl- 0
+
+#直方体型の周期境界の溶媒和ボックスを形成する。入力PDBファイルのサイズに対し、最低10A余裕を持って形成する。
+solvateBox mol TIP3PBOX 10.0
+#最後に、"mol"という溶媒和ボックスの系の電荷情報を表示する。0.00000になっていることが理想。
+charge mol
+
+#溶媒和された系のトポロジー・初期座標をleap.top, leap.crdとしてそれぞれ保存
+saveAmberParm mol leap.top leap.crd
+
+#溶媒和された系のPDBファイルをleap.pdbとして保存
+savePDB mol leap.pdb
+quit
