@@ -1,7 +1,7 @@
 #AMBER の力場パラメータff14SBを読み込む
-source leaprc.protein.ff14SB #for AmberTools16
+source leaprc.protein.ff14SB #for AmberTools18
 source leaprc.gaff #小分子向けの汎用力場「GAFF」を読み込む
-source leaprc.water.tip3p #for AmberTools16
+source leaprc.water.tip3p #for AmberTools18
 
 #追加のイオンの力場の導入
 loadAmberParams frcmod.ionsjc_tip3p
