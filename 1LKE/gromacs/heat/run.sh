@@ -1,10 +1,4 @@
 #!/bin/sh
-#PBS -q h-small
-#PBS -l select=1:mpiprocs=6:ompthreads=6
-#PBS -W group_list=gg67
-#PBS -l walltime=04:00:00
-
-test $PBS_O_WORKDIR && cd $PBS_O_WORKDIR
 
 input="1lke"
 prev_tpr="../minimize/min2.gro"
@@ -32,4 +26,4 @@ for (( i=1;i<10; i++));do
   prev_cpt="md$i.cpt"
 done
 
-rm md[1-9].trr
+

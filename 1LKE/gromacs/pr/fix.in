@@ -1,0 +1,13 @@
+# Convert the trajectory file to display on PyMOL
+# cpptraj -p <topology file or pdb file> -i fix.in 
+# See also https://qiita.com/Ag_smith/items/d1984cd11bb24919e5d5
+
+trajin 1lke.trr 1 last 10
+
+unwrap :1-170
+center :1-170@CA mass origin
+autoimage
+rms first out rmsd.dat @CA
+strip :WAT,Na+,Cl-
+trajout 1lkenj.trr
+go

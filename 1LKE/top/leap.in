@@ -7,7 +7,7 @@ source leaprc.water.tip3p #for AmberTools16
 loadAmberParams frcmod.ionsjc_tip3p
 
 #.mol2ファイルの読み込み
-DOG = loadMol2 dog.mol2
+DOG = loadMol2 ../PDB/dog.mol2
 
 #pdbを"mol"として読み込む
 mol = loadPDB ../PDB/1LKE_trun_hid_cyx.pdb
@@ -25,8 +25,8 @@ solvateBox mol TIP3PBOX 10.0
 #最後に、"mol"という溶媒和ボックスの系の電荷情報を表示する。0.00000になっていることが理想。
 charge mol
 
-#溶媒和された系のトポロジー・初期座標をleap.top, leap.crdとしてそれぞれ保存
-saveAmberParm mol leap.top leap.crd
+#溶媒和された系のトポロジー・初期座標をleap.parm7, leap.rst7としてそれぞれ保存
+saveAmberParm mol leap.parm7 leap.rst7
 
 #溶媒和された系のPDBファイルをleap.pdbとして保存
 savePDB mol leap.pdb

@@ -80,7 +80,7 @@ fi
 # fi
 
 ##################
-python ~/apps/acpype.py -p ${input}.top -x ${input}.crd
+python ~/apps/acpype.py -p ${input}.parm7 -x ${input}.rst7
 rm md.mdp em.mdp
 if [ ! -e ${input}_GMX.gro ];then
     echo "No ${input}_GMX.gro file. Exit."

@@ -89,7 +89,7 @@ ionOrSolResNameList = ['Cl-', 'Na+', 'K+', 'CIO', 'Cs+', 'IB', 'Li+', 'MG2',
 
 leapGaffFile = 'leaprc.gaff'
 # leapAmberFile = 'leaprc.ff99SB'  # 'leaprc.ff10' and 'leaprc.ff99bsc0' has extra Atom Types not in parm99.dat
-leapAmberFile = 'leaprc.ff14SB'
+leapAmberFile = 'leaprc.ff12SB'
 
 # "qm_theory='AM1', grms_tol=0.0002, maxcyc=999, tight_p_conv=1, scfconv=1.d-10,"
 # "AM1 ANALYT MMOK GEO-OK PRECISE"
@@ -1140,15 +1140,15 @@ a        """
 
         if self.atomType == 'amber':
             gaffFile = self.locateDat('gaff.dat')
-            parmfile = self.locateDat('parm10.dat')
-            frcmodffxxSB = self.locateDat('frcmod.ff14SB')
+            parm99file = self.locateDat('parm99.dat')
+            frcmodff99SB = self.locateDat('frcmod.ff99SB')
             # frcmodparmbsc0 = self.locateDat('frcmod.parmbsc0')
-            parmGaffFile = parmMerge(parmfile, gaffFile)
-            parmGaffffxxSBFile = parmMerge(parmGaffFile, frcmodffxxSB, frcmod=True)
+            parm99gaffFile = parmMerge(parm99file, gaffFile)
+            parm99gaffff99SBFile = parmMerge(parm99gaffFile, frcmodff99SB, frcmod=True)
             # parm99gaffff99SBparmbsc0File = parmMerge(parm99gaffff99SBFile, frcmodparmbsc0, frcmod = True)
             # parm10file = self.locateDat('parm10.dat') # PARM99 + frcmod.ff99SB + frcmod.parmbsc0 in AmberTools 1.4
 
-            cmd += ' -p %s' % parmGaffffxxSBFile  # Ignoring parm10.dat and BSC0
+            cmd += ' -p %s' % parm99gaffff99SBFile  # Ignoring parm10.dat and BSC0
 
         self.parmchkLog = _getoutput(cmd)
 
@@ -1236,7 +1236,7 @@ a        """
         """
         self.topFileData = open(self.acTopFileName, 'r').readlines()
         self.molTopol = MolTopol(self, verbose=self.verbose, debug=self.debug,
-                                 gmx4=self.gmx4, disam=self.disam, direct=self.direct,
+                                 gmx45=self.gmx45, disam=self.disam, direct=self.direct,
                                  is_sorted=self.sorted, chiral=self.chiral)
         if self.outTopols:
             if 'cns' in self.outTopols:
@@ -1287,8 +1287,6 @@ a        """
             raise Exception("PRMTOP file empty?")
 
         for rawLine in self.topFileData:
-            if '%COMMENT' in rawLine:
-                continue
             line = rawLine[:-1]
             if tFlag in line:
                 block = True
@@ -1448,9 +1446,9 @@ a        """
         self.atomTypes = atomTypes
 
         self.pbc = None
-        if len(coords) == len(atoms) + 2 or len(coords) == len(atoms) * 2 + 2:
+        if len(coords) == len(atoms) + 2:
             self.pbc = [coords[-2], coords[-1]]
-        self.printDebug("PBC = %s" % self.pbc)
+        self.printDebug("PBC = '%s" % self.pbc)
         self.printDebug("getAtoms done")
 
     def getBonds(self):
@@ -1775,12 +1773,12 @@ a        """
                 kPhi = dih.kPhi  # in rad
                 phaseRaw = dih.phase * radPi  # in degree
                 phase = int(phaseRaw)  # in degree
-                if period > 4 and self.gmx4:
-                    self.printError("Likely trying to convert ILDN to RB, DO NOT use option '-z'")
+                if period > 4 and not self.gmx45:
+                    self.printError("Likely trying to convert ILDN to RB, use option '-r' for GMX45")
                     sys.exit(1)
                 if phase in [0, 180]:
                     properDihedralsGmx45.append([item[0].atoms, phaseRaw, kPhi, period])
-                    if self.gmx4:
+                    if not self.gmx45:
                         if kPhi > 0:
                             V[period] = 2 * kPhi * cal
                         if period == 1:
@@ -2504,8 +2502,7 @@ a        """
         self.printDebug("properDihedralsGmx45 %i" % len(self.properDihedralsGmx45))
         temp = []
         otemp = []
-        if self.gmx4:
-            self.printMess("Writing RB dihedrals for old GMX 4.\n")
+        if not self.gmx45:
             for dih in self.properDihedralsCoefRB:
                 a1 = dih[0][0].atomName
                 a2 = dih[0][1].atomName
@@ -2543,7 +2540,7 @@ a        """
                     oitpText += otemp
             self.printDebug("GMX proper dihedrals done")
         else:
-            self.printMess("Writing GMX dihedrals for GMX 4.5 and higher.\n")
+            self.printMess("Writing GMX dihedrals for GMX 4.5.\n")
             funct = 9  # 9
             for dih in self.properDihedralsGmx45:
                 a1 = dih[0][0].atomName
@@ -2576,7 +2573,7 @@ a        """
                     oitpText += otemp
 
         # for properDihedralsAlphaGamma
-        if not self.gmx4:
+        if self.gmx45:
             funct = 4  # 4
         else:
             funct = 1
@@ -2736,21 +2733,21 @@ a        """
             boxX = max(X) - min(X)  # + 2.0 # 2.0 is double of rlist
             boxY = max(Y) - min(Y)  # + 2.0
             boxZ = max(Z) - min(Z)  # + 2.0
-            text = "%11.5f %11.5f %11.5f\n" % (boxX * 20.0, boxY * 20.0, boxZ * 20.0)
+            text = "%11.5f %11.5f %11.5f\n" % (boxX, boxY, boxZ)
         groFile.write(text)
 
     def writeMdpFiles(self):
         emMdp = """; to test
-; gmx grompp -f em.mdp -c {base}_GMX.gro -p {base}_GMX.top -o em.tpr -v
-; gmx mdrun -ntmpi 1 -v -deffnm em
+; grompp -f em.mdp -c {base}_GMX.gro -p {base}_GMX.top -o em.tpr -v
+; mdrun -v -deffnm em
 integrator               = steep
 nsteps                   = 500
 """.format(base=self.baseName)
         mdMdp = """; to test
-; gmx grompp -f md.mdp -c em.gro -p {base}_GMX.top -o md.tpr
-; gmx mdrun -ntmpi 1 -v -deffnm md
+; grompp -f md.mdp -c em.gro -p {base}_GMX.top -o md.tpr
+; mdrun -v -deffnm md
 integrator               = md
-nsteps                   = 10000
+nsteps                   = 1000
 """.format(base=self.baseName)
         emMdpFile = open('em.mdp', 'w')
         mdMdpFile = open('md.mdp', 'w')
@@ -3079,11 +3076,11 @@ class ACTopol(AbstractTopol):
                  multiplicity='1', atomType='gaff', force=False, basename=None,
                  debug=False, outTopol='all', engine='tleap', allhdg=False,
                  timeTol=36000, qprog='sqm', ekFlag=None, verbose=True,
-                 gmx4=False, disam=False, direct=False, is_sorted=False, chiral=False):
+                 gmx45=False, disam=False, direct=False, is_sorted=False, chiral=False):
 
         self.debug = debug
         self.verbose = verbose
-        self.gmx4 = gmx4
+        self.gmx45 = gmx45
         self.disam = disam
         self.direct = direct
         self.sorted = is_sorted
@@ -3198,14 +3195,14 @@ class MolTopol(ACTopol):
     """
 
     def __init__(self, acTopolObj=None, acFileXyz=None, acFileTop=None,
-                 debug=False, basename=None, verbose=True, gmx4=False,
+                 debug=False, basename=None, verbose=True, gmx45=False,
                  disam=False, direct=False, is_sorted=False, chiral=False):
 
         self.chiral = chiral
         self.obchiralExe = _getoutput('which obchiral') or ''
         self.allhdg = False
         self.debug = debug
-        self.gmx4 = gmx4
+        self.gmx45 = gmx45
         self.disam = disam
         self.direct = direct
         self.sorted = is_sorted
@@ -3431,7 +3428,7 @@ if __name__ == '__main__':
                       action="store",
                       default='gaff',
                       dest='atom_type',
-                      help="atom type, can be gaff or amber (AMBER14SB), default is gaff",)
+                      help="atom type, can be gaff or amber (AMBER99+SB), default is gaff",)
     parser.add_option('-q', '--qprog',
                       type='choice',
                       choices=['mopac', 'sqm', 'divcon'],
@@ -3458,10 +3455,10 @@ if __name__ == '__main__':
                       default='all',
                       dest='outtop',
                       help="output topologies: all (default), gmx, cns or charmm",)
-    parser.add_option('-z', '--gmx4',
+    parser.add_option('-r', '--gmx45',
                       action="store_true",
-                      dest='gmx4',
-                      help='write RB dihedrals old GMX 4.0',)
+                      dest='gmx45',
+                      help='write GMX dihedrals for GMX 4.5',)
     parser.add_option('-t', '--cnstop',
                       action="store_true",
                       dest='cnstop',
@@ -3531,7 +3528,7 @@ if __name__ == '__main__':
             print("Converting Amber input files to Gromacs ...")
             system = MolTopol(acFileXyz=options.inpcrd, acFileTop=options.prmtop,
                               debug=options.debug, basename=options.basename,
-                              verbose=options.verboseless, gmx4=options.gmx4,
+                              verbose=options.verboseless, gmx45=options.gmx45,
                               disam=options.disambiguate, direct=options.direct,
                               is_sorted=options.sorted, chiral=options.chiral)
             system.printDebug("prmtop and inpcrd files parsed")
@@ -3544,7 +3541,7 @@ if __name__ == '__main__':
                                engine=options.engine, allhdg=options.cnstop,
                                basename=options.basename, timeTol=options.max_time,
                                qprog=options.qprog, ekFlag='''"%s"''' % options.keyword,
-                               verbose=options.verboseless, gmx4=options.gmx4,
+                               verbose=options.verboseless, gmx45=options.gmx45,
                                disam=options.disambiguate, direct=options.direct,
                                is_sorted=options.sorted, chiral=options.chiral)
 
